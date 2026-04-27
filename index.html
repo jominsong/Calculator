@@ -25,7 +25,7 @@ body{
 .stat-label{font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:.05em}
 .stat-value{font-size:26px;font-weight:600;color:#1c1c1e;margin-top:1px;font-variant-numeric:tabular-nums}
 #s-total{color:#bf7b00}
-#s-avg{color:#0a7a5a}
+#s-mode{color:#7b3fb5;font-size:20px}
 #history{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px;min-height:26px;align-items:center}
 .chip{font-size:11px;padding:3px 9px;border-radius:20px;background:#fff;color:#636366;border:1px solid #e5e5ea}
 #display{background:#fff;border-radius:12px;margin:8px 12px 0;padding:12px 16px;text-align:right;min-height:60px}
@@ -58,7 +58,7 @@ body{
 <div id="stats">
   <div class="stat"><div class="stat-label">발수</div><div class="stat-value" id="s-shots">0</div></div>
   <div class="stat"><div class="stat-label">총점</div><div class="stat-value" id="s-total">0</div></div>
-  <div class="stat"><div class="stat-label">평균</div><div class="stat-value" id="s-avg">—</div></div>
+  <div class="stat"><div class="stat-label">최빈</div><div class="stat-value" id="s-mode">—</div></div>
 </div>
 
 <div id="history"></div>
@@ -86,12 +86,24 @@ body{
 </div>
 
 <script>
-var total=0,shots=0,mode=0,mulScore=0,log=[];
+var total=0,shots=0,mode=0,mulScore=0,log=[],freq={};
+
 function $(id){return document.getElementById(id)}
+
+function getMode(){
+  var keys=Object.keys(freq);
+  if(!keys.length)return'—';
+  var max=0;
+  keys.forEach(function(k){if(freq[k]>max)max=freq[k];});
+  var tops=keys.filter(function(k){return freq[k]===max;});
+  tops.sort(function(a,b){return b-a;});
+  return tops.join(',');
+}
+
 function render(){
   $('s-shots').textContent=shots;
   $('s-total').textContent=total;
-  $('s-avg').textContent=shots?(total/shots).toFixed(1):'—';
+  $('s-mode').textContent=getMode();
   $('history').innerHTML=log.slice(-7).map(function(h){return'<span class="chip">'+h+'</span>'}).join('');
   var main,hint;
   if(mode===0){main=total||'0';hint='';}
@@ -101,28 +113,55 @@ function render(){
   $('disp-hint').textContent=hint;
   $('btn-mul').className='btn'+(mode?' on':'');
 }
-function add(score,count,label){
-  total+=score;shots+=count;log.push(label);if(log.length>20)log.shift();
+
+function addFreq(score,count){
+  freq[score]=(freq[score]||0)+count;
 }
+
+function add(score,count,label,baseScore){
+  total+=score;shots+=count;
+  addFreq(baseScore!==undefined?baseScore:score,count);
+  log.push(label);if(log.length>20)log.shift();
+}
+
 function digit(n){
   if(mode===0){add(n,1,'+'+n+'점');}
   else if(mode===1){mulScore=n;mode=2;}
-  else{add(mulScore*n,n,mulScore+'×'+n+'='+(mulScore*n));mode=0;}
+  else{add(mulScore*n,n,mulScore+'×'+n+'='+(mulScore*n),mulScore);mode=0;}
   render();
 }
+
 $('btn-mul').onclick=function(){mode=mode?0:1;mulScore=0;render();};
+
 $('btn-ten').onclick=function(){
   if(mode===0){add(10,1,'+10점');render();}
   else if(mode===1){mulScore=10;mode=2;render();}
-  else if(mode===2){add(mulScore*10,10,mulScore+'×10='+(mulScore*10));mode=0;render();}
+  else if(mode===2){add(mulScore*10,10,mulScore+'×10='+(mulScore*10),mulScore);mode=0;render();}
 };
+
 $('btn-back').onclick=function(){
   if(mode){mode=0;mulScore=0;}
-  else if(log.length){var m=log[log.length-1].match(/^\+(\d+)점$/);if(m){total-=+m[1];shots--;log.pop();}}
+  else if(log.length){
+    var last=log[log.length-1];
+    var m=last.match(/^\+(\d+)점$/);
+    if(m){
+      var v=+m[1];
+      total-=v;shots--;
+      freq[v]--;if(freq[v]<=0)delete freq[v];
+      log.pop();
+    }
+  }
   render();
 };
-$('btn-clr').onclick=function(){total=0;shots=0;mode=0;mulScore=0;log=[];render();};
-document.querySelectorAll('[data-n]').forEach(function(b){b.onclick=function(){digit(+b.dataset.n);};});
+
+$('btn-clr').onclick=function(){
+  total=0;shots=0;mode=0;mulScore=0;log=[];freq={};render();
+};
+
+document.querySelectorAll('[data-n]').forEach(function(b){
+  b.onclick=function(){digit(+b.dataset.n);};
+});
+
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
 render();
 </script>

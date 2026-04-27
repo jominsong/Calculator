@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="사격 계산기">
+<meta name="theme-color" content="#f2f2f7">
+<link rel="manifest" href="manifest.json">
+<title>사격 점수 계산기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{height:100%;overflow:hidden;background:#f2f2f7}
+body{
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  display:flex;flex-direction:column;
+  height:100dvh;
+  max-width:480px;margin:0 auto;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+#stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 12px 8px}
+.stat{background:#fff;border-radius:12px;padding:10px 12px}
+.stat-label{font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:.05em}
+.stat-value{font-size:26px;font-weight:600;color:#1c1c1e;margin-top:1px;font-variant-numeric:tabular-nums}
+#s-total{color:#bf7b00}
+#s-avg{color:#0a7a5a}
+#history{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px;min-height:26px;align-items:center}
+.chip{font-size:11px;padding:3px 9px;border-radius:20px;background:#fff;color:#636366;border:1px solid #e5e5ea}
+#display{background:#fff;border-radius:12px;margin:8px 12px 0;padding:12px 16px;text-align:right;min-height:60px}
+#disp-main{font-size:32px;font-weight:600;color:#1c1c1e;font-variant-numeric:tabular-nums}
+#disp-hint{font-size:12px;color:#8e8e93;margin-top:2px;min-height:16px}
+#numpad{
+  flex:1;display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(3,1fr) auto;
+  gap:6px;padding:8px 12px 12px
+}
+.btn{
+  width:100%;height:100%;border-radius:12px;border:none;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  font-size:22px;font-weight:500;color:#1c1c1e;
+  background:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-user-select:none;user-select:none
+}
+.btn:active{opacity:.5}
+#btn-ten{background:#fff3df;color:#7a4d00;font-size:17px;font-weight:600}
+#btn-mul{background:#deeeff;color:#0a58a0;font-size:24px}
+#btn-mul.on{background:#1a73e8;color:#fff}
+#btn-clr{background:#ffe5e5;color:#c0392b;font-size:16px;font-weight:500;grid-column:span 2;height:60px}
+#btn-back{background:#e5e5ea;color:#3a3a3c;grid-column:span 2;height:60px;font-size:22px}
+</style>
+</head>
+<body>
+
+<div id="stats">
+  <div class="stat"><div class="stat-label">발수</div><div class="stat-value" id="s-shots">0</div></div>
+  <div class="stat"><div class="stat-label">총점</div><div class="stat-value" id="s-total">0</div></div>
+  <div class="stat"><div class="stat-label">평균</div><div class="stat-value" id="s-avg">—</div></div>
+</div>
+
+<div id="history"></div>
+
+<div id="display">
+  <div id="disp-main">0</div>
+  <div id="disp-hint"></div>
+</div>
+
+<div id="numpad">
+  <button class="btn" data-n="7">7</button>
+  <button class="btn" data-n="8">8</button>
+  <button class="btn" data-n="9">9</button>
+  <button class="btn" id="btn-mul">×</button>
+  <button class="btn" data-n="4">4</button>
+  <button class="btn" data-n="5">5</button>
+  <button class="btn" data-n="6">6</button>
+  <button class="btn" id="btn-ten">10</button>
+  <button class="btn" data-n="1">1</button>
+  <button class="btn" data-n="2">2</button>
+  <button class="btn" data-n="3">3</button>
+  <button class="btn" data-n="0">0</button>
+  <button class="btn" id="btn-clr">C</button>
+  <button class="btn" id="btn-back">⌫</button>
+</div>
+
+<script>
+var total=0,shots=0,mode=0,mulScore=0,log=[];
+function $(id){return document.getElementById(id)}
+function render(){
+  $('s-shots').textContent=shots;
+  $('s-total').textContent=total;
+  $('s-avg').textContent=shots?(total/shots).toFixed(1):'—';
+  $('history').innerHTML=log.slice(-7).map(function(h){return'<span class="chip">'+h+'</span>'}).join('');
+  var main,hint;
+  if(mode===0){main=total||'0';hint='';}
+  else if(mode===1){main='× ?';hint='점수를 누르세요';}
+  else{main=mulScore+' × ?';hint='발수를 누르세요';}
+  $('disp-main').textContent=main;
+  $('disp-hint').textContent=hint;
+  $('btn-mul').className='btn'+(mode?' on':'');
+}
+function add(score,count,label){
+  total+=score;shots+=count;log.push(label);if(log.length>20)log.shift();
+}
+function digit(n){
+  if(mode===0){add(n,1,'+'+n+'점');}
+  else if(mode===1){mulScore=n;mode=2;}
+  else{add(mulScore*n,n,mulScore+'×'+n+'='+(mulScore*n));mode=0;}
+  render();
+}
+$('btn-mul').onclick=function(){mode=mode?0:1;mulScore=0;render();};
+$('btn-ten').onclick=function(){
+  if(mode===0){add(10,1,'+10점');render();}
+  else if(mode===1){mulScore=10;mode=2;render();}
+  else if(mode===2){add(mulScore*10,10,mulScore+'×10='+(mulScore*10));mode=0;render();}
+};
+$('btn-back').onclick=function(){
+  if(mode){mode=0;mulScore=0;}
+  else if(log.length){var m=log[log.length-1].match(/^\+(\d+)점$/);if(m){total-=+m[1];shots--;log.pop();}}
+  render();
+};
+$('btn-clr').onclick=function(){total=0;shots=0;mode=0;mulScore=0;log=[];render();};
+document.querySelectorAll('[data-n]').forEach(function(b){b.onclick=function(){digit(+b.dataset.n);};});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
+render();
+</script>
+</body>
+</html>

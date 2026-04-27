@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a73e8"/>
+  <circle cx="256" cy="220" r="130" fill="none" stroke="white" stroke-width="18"/>
+  <circle cx="256" cy="220" r="85" fill="none" stroke="white" stroke-width="12"/>
+  <circle cx="256" cy="220" r="40" fill="none" stroke="white" stroke-width="10"/>
+  <circle cx="256" cy="220" r="12" fill="white"/>
+  <line x1="256" y1="72" x2="256" y2="104" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <line x1="256" y1="336" x2="256" y2="368" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <line x1="108" y1="220" x2="140" y2="220" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <line x1="372" y1="220" x2="404" y2="220" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <text x="256" y="460" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="68" font-weight="700" fill="white">점수</text>
+</svg>

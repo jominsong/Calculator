@@ -1,4 +1,4 @@
-var CACHE='shooting-v1';
+var CACHE='shooting-v2';
 var FILES=['./','./index.html','./manifest.json','./sw.js','./icon.svg'];
 
 self.addEventListener('install',function(e){
